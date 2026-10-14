@@ -168,6 +168,16 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;backg
 .in .bar2.a{animation:none}
 .in .bar2>*{animation:up .7s cubic-bezier(.2,.8,.2,1) both}
 .in .bar2>:nth-child(1){animation-delay:.6s}.in .bar2>:nth-child(2){animation-delay:.67s}.in .bar2>:nth-child(3){animation-delay:.74s}.in .bar2>:nth-child(4){animation-delay:.81s}.in .bar2>:nth-child(5){animation-delay:.88s}.in .bar2>:nth-child(6){animation-delay:.95s}
+
+/* ---- larger tiles ---- */
+:root{--tile:128px}
+.item{width:var(--tile);height:var(--tile)}
+.item .t{font-size:19px;font-weight:600}
+.cells{gap:8px;padding:10px}
+.cells.drop{min-height:calc(var(--tile) + 22px)}
+.lab.ed{width:120px}
+.nm{font-size:24px}
+@media (max-width:560px){:root{--tile:98px}.lab.ed{width:84px}.nm{font-size:19px}.item .t{font-size:15px}}
 </style>
 </head>
 <body>
@@ -262,7 +272,7 @@ function makeView(){
  h+='<p class="sub a" style="--i:8;margin-top:24px">Unsorted: drag items onto a tier</p><div class="cells drop pool a" style="--i:9" data-m="pool">'+(mk.pool.length?mk.pool.map(function(it){return mitem(it,k++)}).join(''):'<span class="empty">Add images or text above.</span>')+'</div>';
  return h+'<p class="note a" style="--i:10;margin-top:22px">Want the community to rank it? <button class="ghostb" id="msug" type="button">Suggest as a community list</button></p>';
 }
-function fit(f){return new Promise(function(res){var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){var q=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=200;c.getContext('2d').drawImage(im,(im.width-q)/2,(im.height-q)/2,q,q,0,0,200,200);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=function(){URL.revokeObjectURL(u);res(null)};im.src=u})}
+function fit(f){return new Promise(function(res){var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){var q=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=280;c.getContext('2d').drawImage(im,(im.width-q)/2,(im.height-q)/2,q,q,0,0,280,280);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=function(){URL.revokeObjectURL(u);res(null)};im.src=u})}
 function fw(c,t,x,y,mw,max,start,min,wt){var ws=String(t).split(/\s+/),sz=start,ln;
  function lay(){var o=[],cu='';ws.forEach(function(q){var z=cu?cu+' '+q:q;if(c.measureText(z).width>mw&&cu){o.push(cu);cu=q}else cu=z});o.push(cu);return o}
  for(;sz>=min;sz--){c.font=wt+' '+sz+'px system-ui,sans-serif';ln=lay();if(ln.length<=max&&ws.every(function(q){return c.measureText(q).width<=mw}))break}
@@ -271,11 +281,11 @@ function fw(c,t,x,y,mw,max,start,min,wt){var ws=String(t).split(/\s+/),sz=start,
 function mexport(){
  var all2=[];mk.tiers.forEach(function(t){t.items.forEach(function(i){all2.push(i)})});var imgs={};
  Promise.all(all2.filter(function(i){return i.src}).map(function(i){return new Promise(function(r){var im=new Image();im.onload=function(){imgs[i.id]=im;r()};im.onerror=r;im.src=i.src})})).then(function(){
-  var W2=1200,LW=170,S=100,G=6,per=Math.floor((W2-LW-G)/(S+G)),hs=mk.tiers.map(function(t){return Math.max(110,Math.max(1,Math.ceil(t.items.length/per))*(S+G)+G)}),H2=76+hs.reduce(function(a,b){return a+b},0);
+  var W2=1400,LW=190,S=132,G=8,per=Math.floor((W2-LW-G)/(S+G)),hs=mk.tiers.map(function(t){return Math.max(150,Math.max(1,Math.ceil(t.items.length/per))*(S+G)+G)}),H2=76+hs.reduce(function(a,b){return a+b},0);
   var cv=document.createElement('canvas');cv.width=W2;cv.height=H2;var c=cv.getContext('2d');c.fillStyle='#000';c.fillRect(0,0,W2,H2);
   c.textAlign='center';c.textBaseline='middle';c.fillStyle='#F5F5F2';c.font='700 36px system-ui,sans-serif';c.fillText(mk.title,W2/2,38);
-  var y=76;mk.tiers.forEach(function(t,k){var h=hs[k];c.fillStyle=t.color;c.fillRect(0,y,LW,h);c.fillStyle=ink(t.color);fw(c,t.name,LW/2,y+h/2,LW-24,3,34,14,700);c.fillStyle='#0B0B0B';c.fillRect(LW,y,W2-LW,h);
-   t.items.forEach(function(it,j){var x=LW+G+(j%per)*(S+G),yy=y+G+Math.floor(j/per)*(S+G);if(imgs[it.id])c.drawImage(imgs[it.id],x,yy,S,S);else{c.fillStyle=it.bg||'#333';c.fillRect(x,yy,S,S);c.fillStyle='#FFF';fw(c,it.text||'',x+S/2,yy+S/2,S-12,4,17,9,600)}});y+=h});
+  var y=76;mk.tiers.forEach(function(t,k){var h=hs[k];c.fillStyle=t.color;c.fillRect(0,y,LW,h);c.fillStyle=ink(t.color);fw(c,t.name,LW/2,y+h/2,LW-28,3,38,14,700);c.fillStyle='#0B0B0B';c.fillRect(LW,y,W2-LW,h);
+   t.items.forEach(function(it,j){var x=LW+G+(j%per)*(S+G),yy=y+G+Math.floor(j/per)*(S+G);if(imgs[it.id])c.drawImage(imgs[it.id],x,yy,S,S);else{c.fillStyle=it.bg||'#333';c.fillRect(x,yy,S,S);c.fillStyle='#FFF';fw(c,it.text||'',x+S/2,yy+S/2,S-16,4,22,10,600)}});y+=h});
   $('#out').src=cv.toDataURL('image/png');$('#ov').classList.add('on')});
 }
 function mtext(){var i=$('#mtxt'),v=i&&i.value.trim();if(!v)return;mk.pool.push({id:mid(),text:v,bg:TILE[v.length%TILE.length]});msave();render(false,true);var n=$('#mtxt');if(n)n.focus()}
@@ -296,13 +306,13 @@ function mclick(b){
 document.addEventListener('change',function(e){if(e.target.id!=='mfile')return;var fl=[].slice.call(e.target.files);e.target.value='';Promise.all(fl.map(fit)).then(function(a){a.forEach(function(x){if(x)mk.pool.push({id:mid(),src:x})});msave();render(false)})});
 document.addEventListener('input',function(e){var t=e.target,T;
  if(t.id==='mttl'){mk.title=t.textContent;msave()}
- else if(t.id==='tn'){T=curT();if(T){T.name=t.value;var nm=document.querySelector('.nm[data-nm="'+T.id+'"]');if(nm){nm.textContent=T.name;fitEl(nm,22,10,0)}msave()}}
+ else if(t.id==='tn'){T=curT();if(T){T.name=t.value;var nm=document.querySelector('.nm[data-nm="'+T.id+'"]');if(nm){nm.textContent=T.name;fitEl(nm,24,10,0)}msave()}}
  else if(t.id==='tcol'){setColor(t.value,false)}
  else if(t.id==='stl'||t.id==='sit'){sugDraft={title:$('#stl').value,items:$('#sit').value.split('\n')}}});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var t=e.target;if(t.id==='mtxt'){e.preventDefault();mtext()}else if(t.id==='mttl'||(t.classList&&t.classList.contains('nm'))){e.preventDefault();t.blur()}});
 /* ---- text fitting (no broken words) + tier editor ---- */
 function fitEl(el,max,min,mh,aw){var z=max;el.style.fontSize=z+'px';while(z>min&&(el.scrollWidth>(aw||el.clientWidth)+1||(mh&&el.scrollHeight>mh))){z-=.5;el.style.fontSize=z+'px'}}
-function fitAll(){document.querySelectorAll('.item .t').forEach(function(e){fitEl(e,15,8,Math.max(20,e.parentNode.clientHeight-8),e.parentNode.clientWidth-8)});document.querySelectorAll('.nm').forEach(function(e){fitEl(e,22,10,0)})}
+function fitAll(){document.querySelectorAll('.item .t').forEach(function(e){fitEl(e,Math.min(22,Math.max(13,Math.round(e.parentNode.clientWidth*.15))),9,Math.max(20,e.parentNode.clientHeight-8),e.parentNode.clientWidth-8)});document.querySelectorAll('.nm').forEach(function(e){fitEl(e,24,10,0)})}
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
 addEventListener('resize',fitAll);
 var editT=null;
