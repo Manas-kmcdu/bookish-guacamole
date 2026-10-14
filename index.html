@@ -136,6 +136,38 @@ h1{font-weight:600;letter-spacing:-.03em}
 .back{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (max-width:560px){.tabs button{padding:9px 10px;letter-spacing:.06em}}
+
+/* ---- tiles, pencil, dialog, opening animation ---- */
+.item{padding:4px;word-break:normal;overflow-wrap:normal}
+.item .t{display:block;width:100%;font-size:15px;line-height:1.15;text-align:center;word-break:normal;overflow-wrap:normal}
+.nm{display:block;width:100%;max-width:100%;text-align:center;font-weight:700;line-height:1.1;word-break:normal;overflow-wrap:normal;pointer-events:none}
+.lab.ed{position:relative;justify-content:center;align-items:stretch;padding:24px 10px 12px}
+.pen{position:absolute;top:5px;right:5px;width:22px;height:22px;display:grid;place-items:center;padding:0;border:0;background:rgba(0,0,0,.3);color:#fff;cursor:pointer;opacity:.85;transition:opacity .2s,background .2s}
+.pen:hover{opacity:1;background:rgba(0,0,0,.55)}
+.dlg{background:#050505;border:1px solid #2A2A2A;padding:26px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px}
+.dlg h3{margin:0 0 4px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.dlg label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.sws{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sw{width:26px;height:26px;border:1px solid #333;cursor:pointer;padding:0}
+.sw.on{outline:2px solid #fff;outline-offset:2px}
+.dlg input[type=color]{width:34px;height:26px;padding:0;border:1px solid #333;background:none;cursor:pointer}
+.dlg .btns{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
+.ghostb.danger{color:#E0605A;border-color:#4A2220}
+.ghostb.danger:hover{border-color:#E0605A}
+.dlg .txt{width:100%}
+nav{position:relative;border-bottom:0}
+nav::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:#222;transform-origin:0 50%;animation:draw 1.1s cubic-bezier(.2,.8,.2,1) both}
+.logo{animation:fadein .9s ease both}
+.tabs{animation:fadein .9s .15s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes title{from{opacity:0;transform:translateY(22px);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
+.in .hd.a{animation:none}
+.in .hd h1{animation:title 1s cubic-bezier(.2,.8,.2,1) .2s both}
+.in .hd p{animation:up .8s cubic-bezier(.2,.8,.2,1) .5s both}
+.in .bar2.a{animation:none}
+.in .bar2>*{animation:up .7s cubic-bezier(.2,.8,.2,1) both}
+.in .bar2>:nth-child(1){animation-delay:.6s}.in .bar2>:nth-child(2){animation-delay:.67s}.in .bar2>:nth-child(3){animation-delay:.74s}.in .bar2>:nth-child(4){animation-delay:.81s}.in .bar2>:nth-child(5){animation-delay:.88s}.in .bar2>:nth-child(6){animation-delay:.95s}
 </style>
 </head>
 <body>
@@ -144,6 +176,7 @@ h1{font-weight:600;letter-spacing:-.03em}
   <main id="main"></main>
 </div>
 <div class="ov" id="ov"><img id="out" alt="Your tier list"><p>Press and hold the image (or right-click) to save it.</p><button class="btn" id="ovx" type="button">Close</button></div>
+<div class="ov" id="tov"><div class="dlg" role="dialog" aria-label="Edit tier"><h3>Edit tier</h3><label for="tn">Name</label><input class="txt" id="tn" maxlength="14" autocomplete="off" style="width:100%"><label>Colour</label><div class="sws" id="tsw"></div><div class="btns"><button class="ghostb danger" id="tdel" type="button">Delete tier</button><button class="btn" id="tdone" type="button">Done</button></div></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
 (function(){
@@ -208,7 +241,7 @@ function render(anim,force){
  var L=view==='list'?find(cur):null;
  m.innerHTML=view==='make'?makeView():view==='suggest'?sugView():(L?listView(L):home());
  $('#tabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.go===(view==='suggest'?'suggest':view==='make'?'make':'home'))});
- $('#dot').className='dot'+(DBX?' live':'');$('#dot').title=DBX?'Live':'Demo mode: stored on this device only';
+ fitAll();$('#dot').className='dot'+(DBX?' live':'');$('#dot').title=DBX?'Live':'Demo mode: stored on this device only';
 }
 function go(v,id){view=v;cur=id||null;tab='c';if(v!=='suggest')sugDraft=null;if(v==='list'){var L=find(id);draft=Object.assign({},((st.votes[UID]||{})[id])||{})}render(true);scrollTo(0,0)}
 /* ---- personal tier maker (the default) ---- */
@@ -221,24 +254,28 @@ function ink(h){var n=parseInt(String(h).slice(1),16)||0,l=(.299*(n>>16)+.587*(n
 function mlists(){return [mk.pool].concat(mk.tiers.map(function(t){return t.items}))}
 function mtake(id){var L=mlists();for(var i=0;i<L.length;i++)for(var j=0;j<L[i].length;j++)if(L[i][j].id===id)return L[i].splice(j,1)[0];return null}
 function mlist(k){if(k==='pool')return mk.pool;var t=mk.tiers.filter(function(z){return z.id===k})[0];return t?t.items:null}
-function mitem(it,i){var inner=it.src?'<img src="'+esc(it.src)+'" alt="">':esc(it.text||'');return '<div class="item" style="--i:'+i+(it.src?'':';background:'+esc(it.bg||'#333'))+'" data-id="'+esc(it.id)+'">'+inner+'<button class="x" data-rm="'+esc(it.id)+'" type="button" aria-label="Remove item">&times;</button></div>'}
+function mitem(it,i){var inner=it.src?'<img src="'+esc(it.src)+'" alt="">':'<span class="t">'+esc(it.text||'')+'</span>';return '<div class="item" style="--i:'+i+(it.src?'':';background:'+esc(it.bg||'#333'))+'" data-id="'+esc(it.id)+'">'+inner+'<button class="x" data-rm="'+esc(it.id)+'" type="button" aria-label="Remove item">&times;</button></div>'}
 function makeView(){
  var k=0,h='<div class="hd a"><h1 id="mttl" contenteditable="true" spellcheck="false" aria-label="Tier list title">'+esc(mk.title)+'</h1><p>Drag items onto tiers. Rename tiers, change colours, export when you are done.</p></div>';
  h+='<div class="bar2 a" style="--i:1"><label class="btn" for="mfile">Add images</label><input id="mfile" type="file" accept="image/*" multiple hidden><input class="txt" id="mtxt" maxlength="30" placeholder="Or type an item" aria-label="Text item"><button class="ghostb" id="madd" type="button">Add text</button><button class="ghostb" id="mtier" type="button">Add tier</button><button class="ghostb" id="mexp" type="button">Export image</button><button class="ghostb" id="mrst" type="button">Reset</button></div>';
- mk.tiers.forEach(function(t,j){h+='<div class="row a" style="--i:'+(j+2)+'"><div class="lab ed" style="background:'+esc(t.color)+';color:'+ink(t.color)+'"><div class="nm" contenteditable="true" spellcheck="false" data-nm="'+esc(t.id)+'" aria-label="Tier name">'+esc(t.name)+'</div><div class="ctl"><input type="color" value="'+esc(t.color)+'" data-col="'+esc(t.id)+'" aria-label="Tier colour"><button data-deltier="'+esc(t.id)+'" type="button" aria-label="Delete tier">&times;</button></div></div><div class="cells drop" data-m="'+esc(t.id)+'">'+t.items.map(function(it){return mitem(it,k++)}).join('')+'</div></div>'});
+ mk.tiers.forEach(function(t,j){h+='<div class="row a" style="--i:'+(j+2)+'"><div class="lab ed" style="background:'+esc(t.color)+';color:'+ink(t.color)+'"><button class="pen" data-edit="'+esc(t.id)+'" type="button" aria-label="Edit tier"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/></svg></button><div class="nm" data-nm="'+esc(t.id)+'">'+esc(t.name)+'</div></div><div class="cells drop" data-m="'+esc(t.id)+'">'+t.items.map(function(it){return mitem(it,k++)}).join('')+'</div></div>'});
  h+='<p class="sub a" style="--i:8;margin-top:24px">Unsorted: drag items onto a tier</p><div class="cells drop pool a" style="--i:9" data-m="pool">'+(mk.pool.length?mk.pool.map(function(it){return mitem(it,k++)}).join(''):'<span class="empty">Add images or text above.</span>')+'</div>';
  return h+'<p class="note a" style="--i:10;margin-top:22px">Want the community to rank it? <button class="ghostb" id="msug" type="button">Suggest as a community list</button></p>';
 }
 function fit(f){return new Promise(function(res){var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){var q=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=200;c.getContext('2d').drawImage(im,(im.width-q)/2,(im.height-q)/2,q,q,0,0,200,200);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=function(){URL.revokeObjectURL(u);res(null)};im.src=u})}
-function wr(c,t,x,y,mw,lh,max){var w=String(t).split(/\s+/),ln=[],cur2='';w.forEach(function(q){var z=cur2?cur2+' '+q:q;if(c.measureText(z).width>mw&&cur2){ln.push(cur2);cur2=q}else cur2=z});ln.push(cur2);ln=ln.slice(0,max);var y0=y-(ln.length-1)*lh/2;ln.forEach(function(l,i){c.fillText(l,x,y0+i*lh)})}
+function fw(c,t,x,y,mw,max,start,min,wt){var ws=String(t).split(/\s+/),sz=start,ln;
+ function lay(){var o=[],cu='';ws.forEach(function(q){var z=cu?cu+' '+q:q;if(c.measureText(z).width>mw&&cu){o.push(cu);cu=q}else cu=z});o.push(cu);return o}
+ for(;sz>=min;sz--){c.font=wt+' '+sz+'px system-ui,sans-serif';ln=lay();if(ln.length<=max&&ws.every(function(q){return c.measureText(q).width<=mw}))break}
+ if(sz<min){sz=min;c.font=wt+' '+sz+'px system-ui,sans-serif';ln=lay().slice(0,max)}
+ var lh=sz*1.2,y0=y-(ln.length-1)*lh/2;ln.forEach(function(l,i){c.fillText(l,x,y0+i*lh)})}
 function mexport(){
  var all2=[];mk.tiers.forEach(function(t){t.items.forEach(function(i){all2.push(i)})});var imgs={};
  Promise.all(all2.filter(function(i){return i.src}).map(function(i){return new Promise(function(r){var im=new Image();im.onload=function(){imgs[i.id]=im;r()};im.onerror=r;im.src=i.src})})).then(function(){
   var W2=1200,LW=170,S=100,G=6,per=Math.floor((W2-LW-G)/(S+G)),hs=mk.tiers.map(function(t){return Math.max(110,Math.max(1,Math.ceil(t.items.length/per))*(S+G)+G)}),H2=76+hs.reduce(function(a,b){return a+b},0);
   var cv=document.createElement('canvas');cv.width=W2;cv.height=H2;var c=cv.getContext('2d');c.fillStyle='#000';c.fillRect(0,0,W2,H2);
   c.textAlign='center';c.textBaseline='middle';c.fillStyle='#F5F5F2';c.font='700 36px system-ui,sans-serif';c.fillText(mk.title,W2/2,38);
-  var y=76;mk.tiers.forEach(function(t,k){var h=hs[k];c.fillStyle=t.color;c.fillRect(0,y,LW,h);c.fillStyle=ink(t.color);c.font='700 34px system-ui,sans-serif';wr(c,t.name,LW/2,y+h/2,LW-24,38,3);c.fillStyle='#0B0B0B';c.fillRect(LW,y,W2-LW,h);
-   t.items.forEach(function(it,j){var x=LW+G+(j%per)*(S+G),yy=y+G+Math.floor(j/per)*(S+G);if(imgs[it.id])c.drawImage(imgs[it.id],x,yy,S,S);else{c.fillStyle=it.bg||'#333';c.fillRect(x,yy,S,S);c.fillStyle='#FFF';c.font='600 15px system-ui,sans-serif';wr(c,it.text||'',x+S/2,yy+S/2,S-12,18,4)}});y+=h});
+  var y=76;mk.tiers.forEach(function(t,k){var h=hs[k];c.fillStyle=t.color;c.fillRect(0,y,LW,h);c.fillStyle=ink(t.color);fw(c,t.name,LW/2,y+h/2,LW-24,3,34,14,700);c.fillStyle='#0B0B0B';c.fillRect(LW,y,W2-LW,h);
+   t.items.forEach(function(it,j){var x=LW+G+(j%per)*(S+G),yy=y+G+Math.floor(j/per)*(S+G);if(imgs[it.id])c.drawImage(imgs[it.id],x,yy,S,S);else{c.fillStyle=it.bg||'#333';c.fillRect(x,yy,S,S);c.fillStyle='#FFF';fw(c,it.text||'',x+S/2,yy+S/2,S-12,4,17,9,600)}});y+=h});
   $('#out').src=cv.toDataURL('image/png');$('#ov').classList.add('on')});
 }
 function mtext(){var i=$('#mtxt'),v=i&&i.value.trim();if(!v)return;mk.pool.push({id:mid(),text:v,bg:TILE[v.length%TILE.length]});msave();render(false,true);var n=$('#mtxt');if(n)n.focus()}
@@ -250,16 +287,32 @@ function mclick(b){
  if(b.id==='mrst'){if(!rt){b.textContent='Tap again to reset';rt=setTimeout(function(){rt=0;b.textContent='Reset'},3000)}else{clearTimeout(rt);rt=0;mdef();msave();render(true)}return true}
  if(b.id==='msug'){var names=[];mk.tiers.forEach(function(t){t.items.forEach(function(i){if(i.text)names.push(i.text)})});mk.pool.forEach(function(i){if(i.text)names.push(i.text)});if(names.length<3){toast('Add at least 3 text items to suggest it.');return true}sugDraft={title:mk.title,items:names.slice(0,20)};go('suggest');return true}
  if(b.dataset.rm){mtake(b.dataset.rm);msave();render(false);return true}
- if(b.dataset.deltier){var t=mk.tiers.filter(function(z){return z.id===b.dataset.deltier})[0];if(t){mk.pool=mk.pool.concat(t.items);mk.tiers=mk.tiers.filter(function(z){return z!==t});msave();render(false)}return true}
+ if(b.dataset.edit){openEdit(b.dataset.edit);return true}
+ if(b.id==='tdone'){closeEdit();return true}
+ if(b.dataset.sw){setColor(b.dataset.sw,true);return true}
+ if(b.id==='tdel'){var t=curT();if(t){mk.pool=mk.pool.concat(t.items);mk.tiers=mk.tiers.filter(function(z){return z!==t});msave();closeEdit();render(false)}return true}
  return false;
 }
 document.addEventListener('change',function(e){if(e.target.id!=='mfile')return;var fl=[].slice.call(e.target.files);e.target.value='';Promise.all(fl.map(fit)).then(function(a){a.forEach(function(x){if(x)mk.pool.push({id:mid(),src:x})});msave();render(false)})});
 document.addEventListener('input',function(e){var t=e.target,T;
  if(t.id==='mttl'){mk.title=t.textContent;msave()}
- else if(t.dataset&&t.dataset.nm){T=mk.tiers.filter(function(z){return z.id===t.dataset.nm})[0];if(T){T.name=t.textContent;msave()}}
- else if(t.dataset&&t.dataset.col){T=mk.tiers.filter(function(z){return z.id===t.dataset.col})[0];if(T){T.color=t.value;var l=t.closest('.lab');l.style.background=T.color;l.style.color=ink(T.color);msave()}}
+ else if(t.id==='tn'){T=curT();if(T){T.name=t.value;var nm=document.querySelector('.nm[data-nm="'+T.id+'"]');if(nm){nm.textContent=T.name;fitEl(nm,22,10,0)}msave()}}
+ else if(t.id==='tcol'){setColor(t.value,false)}
  else if(t.id==='stl'||t.id==='sit'){sugDraft={title:$('#stl').value,items:$('#sit').value.split('\n')}}});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var t=e.target;if(t.id==='mtxt'){e.preventDefault();mtext()}else if(t.id==='mttl'||(t.classList&&t.classList.contains('nm'))){e.preventDefault();t.blur()}});
+/* ---- text fitting (no broken words) + tier editor ---- */
+function fitEl(el,max,min,mh,aw){var z=max;el.style.fontSize=z+'px';while(z>min&&(el.scrollWidth>(aw||el.clientWidth)+1||(mh&&el.scrollHeight>mh))){z-=.5;el.style.fontSize=z+'px'}}
+function fitAll(){document.querySelectorAll('.item .t').forEach(function(e){fitEl(e,15,8,Math.max(20,e.parentNode.clientHeight-8),e.parentNode.clientWidth-8)});document.querySelectorAll('.nm').forEach(function(e){fitEl(e,22,10,0)})}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+addEventListener('resize',fitAll);
+var editT=null;
+function curT(){return mk.tiers.filter(function(z){return z.id===editT})[0]}
+function swDraw(c){$('#tsw').innerHTML=MCOL.map(function(x){return '<button class="sw'+(x.toLowerCase()===String(c).toLowerCase()?' on':'')+'" style="background:'+x+'" data-sw="'+x+'" type="button" aria-label="Colour '+x+'"></button>'}).join('')+'<input type="color" id="tcol" value="'+esc(c)+'" aria-label="Custom colour">'}
+function openEdit(id){var t=mk.tiers.filter(function(z){return z.id===id})[0];if(!t)return;editT=id;$('#tn').value=t.name;swDraw(t.color);$('#tov').classList.add('on');setTimeout(function(){var n=$('#tn');n.focus();n.select()},60)}
+function closeEdit(){$('#tov').classList.remove('on');editT=null}
+function setColor(c,redraw){var t=curT();if(!t)return;t.color=c;msave();var n=document.querySelector('.nm[data-nm="'+t.id+'"]'),lab=n&&n.closest('.lab');if(lab){lab.style.background=c;lab.style.color=ink(c)}if(redraw)swDraw(c)}
+document.addEventListener('click',function(e){if(e.target.id==='tov')closeEdit()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if($('#tov').classList.contains('on'))closeEdit();$('#ov').classList.remove('on')}else if(e.key==='Enter'&&e.target.id==='tn'){e.preventDefault();closeEdit()}});
 /* ---- writes ---- */
 function wVotes(){if(DBX)return DBX.doc('votes/'+UID).set({picks:st.votes[UID]||{}});lsave();return Promise.resolve()}
 function wSv(){if(DBX)return DBX.doc('sv/'+UID).set({ids:st.sv[UID]||{}});lsave();return Promise.resolve()}
