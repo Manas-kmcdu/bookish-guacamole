@@ -178,6 +178,16 @@ nav::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;backg
 .lab.ed{width:120px}
 .nm{font-size:24px}
 @media (max-width:560px){:root{--tile:98px}.lab.ed{width:84px}.nm{font-size:19px}.item .t{font-size:15px}}
+
+/* ---- square tier labels ---- */
+:root{--lab:150px}
+.lab.ed{width:var(--lab);height:var(--lab);align-self:flex-start;padding:30px 12px 12px}
+.nm{font-size:28px}
+.lab:not(.ed){width:72px;height:72px;align-self:flex-start;font-size:26px}
+.cells{min-height:72px}
+.cells.drop[data-m]{min-height:var(--lab)}
+.cells.drop[data-t]{min-height:72px}
+@media (max-width:560px){:root{--lab:120px}.lab.ed{width:var(--lab)}.nm{font-size:22px}.lab:not(.ed){width:56px;height:56px;font-size:22px}.cells,.cells.drop[data-t]{min-height:56px}}
 </style>
 </head>
 <body>
